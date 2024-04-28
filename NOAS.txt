@@ -1,0 +1,8 @@
+Crear un sistema que pueda ser utilizado en otros lugares, no a la medida para nuestros modelos
+
+Dejar la opcion a que podamos ingresar los oids,
+
+Permitir crear modelos con sus respectivos oids, sean de tipo color o blanco y negro
+
+los oids deben ser para sacar los contadores y los niveles de toner.
+
