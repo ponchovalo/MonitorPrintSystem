@@ -1,4 +1,4 @@
-export interface CountOid {
+export interface Oid {
     name: string;
     oid: string;
 }
