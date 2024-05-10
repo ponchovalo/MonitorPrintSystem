@@ -14,6 +14,7 @@ import { PrinterModel, PrinterModelSchema } from './entities/printer-model.entit
         schema: PrinterModelSchema
       }
     ])
-  ]
+  ],
+  exports: [PrinterModelService]
 })
 export class PrinterModelModule {}
