@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, InternalServerErrorException, Injectable } from '@nestjs/common';
 import { CreatePrinterDto } from './dto/create-printer.dto';
 import { UpdatePrinterDto } from './dto/update-printer.dto';
 import { Model } from 'mongoose';
@@ -38,13 +38,13 @@ export class PrinterService {
       const printer = await this.printermodel.create(newPrinter)
       return newPrinter
     } catch (error) {
-      console.log(error)
+      this.handleExceptions(error)
     }
     
   }
 
   findAll() {
-    return `This action returns all printer`;
+    return this.printermodel.find();
   }
 
   findOne(id: number) {
@@ -57,5 +57,12 @@ export class PrinterService {
 
   remove(id: number) {
     return `This action removes a #${id} printer`;
+  }
+  private handleExceptions(error: any){
+    if(error.code === 11000){
+      throw new BadRequestException(`La impresora existe en la base de datos`)
+    }
+    console.log(error)
+    throw new InternalServerErrorException(`No se puede crear el modelo revise los logs en el server`)
   }
 }
