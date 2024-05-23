@@ -19,7 +19,7 @@ export class PrinterController {
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.printerService.findOne(+id);
+    return this.printerService.findOne(id);
   }
 
   @Patch(':id')
@@ -30,5 +30,10 @@ export class PrinterController {
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.printerService.remove(+id);
+  }
+
+  @Get('detail/:id')
+  getPrinterDetail(@Param('id') id: string){
+    return this.printerService.getPrinterDetail(id);
   }
 }
