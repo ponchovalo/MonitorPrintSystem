@@ -1,7 +1,8 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
 import { PrinterService } from './printer.service';
 import { CreatePrinterDto } from './dto/create-printer.dto';
 import { UpdatePrinterDto } from './dto/update-printer.dto';
+import { PaginationDto } from 'src/common/dto/pagination.dto';
 
 @Controller('printer')
 export class PrinterController {
@@ -13,8 +14,8 @@ export class PrinterController {
   }
 
   @Get()
-  findAll() {
-    return this.printerService.findAll();
+  findAll(@Query() paginationDto: PaginationDto) {
+    return this.printerService.findAll(paginationDto);
   }
 
   @Get(':id')
@@ -24,12 +25,12 @@ export class PrinterController {
 
   @Patch(':id')
   update(@Param('id') id: string, @Body() updatePrinterDto: UpdatePrinterDto) {
-    return this.printerService.update(+id, updatePrinterDto);
+    return this.printerService.update(id, updatePrinterDto);
   }
 
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.printerService.remove(+id);
+    return this.printerService.remove(id);
   }
 
   @Get('detail/:id')
@@ -38,8 +39,8 @@ export class PrinterController {
   }
 
   @Get('/d/detail')
-  getAllDetail() {
-    return this.printerService.getAllDetails();
+  getAllDetail(@Query() paginationDto: PaginationDto) {
+    return this.printerService.getAllDetails(paginationDto);
   }
 
 }
