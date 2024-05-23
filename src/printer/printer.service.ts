@@ -1,4 +1,4 @@
-import { BadRequestException, InternalServerErrorException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, InternalServerErrorException, Injectable, NotFoundException, RequestTimeoutException } from '@nestjs/common';
 import { CreatePrinterDto } from './dto/create-printer.dto';
 import { UpdatePrinterDto } from './dto/update-printer.dto';
 import { Model } from 'mongoose';
@@ -7,6 +7,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { PrinterModelService } from 'src/printer-model/printer-model.service';
 import { PrinterModel } from 'src/printer-model/entities/printer-model.entity';
 import { Oid } from 'src/printer-model/interfaces/oid.interface';
+import { PrinterResponse } from './interfaces/printer-response.interface';
 
 
 @Injectable()
@@ -17,13 +18,10 @@ export class PrinterService {
     private readonly printermodel: Model<Printer>,
     private readonly printerModelService: PrinterModelService
   ){}
-
-  snmp = require("net-snmp")
-
+private readonly snmp = require("net-snmp")
+  
   async create(createPrinterDto: CreatePrinterDto) {
-
     const printerModel: PrinterModel = await this.printerModelService.findOne(createPrinterDto.printerModel);
-
     try {
       const newPrinter = {
         printerName: createPrinterDto.printerName,
@@ -43,7 +41,6 @@ export class PrinterService {
     } catch (error) {
       this.handleExceptions(error)
     }
-    
   }
 
   findAll() {
@@ -65,35 +62,101 @@ export class PrinterService {
     return `This action removes a #${id} printer`;
   }
 
-  async getPrinterDetail(id: string){
-    const printer: Printer = await this.findOne(id);
-    
-    return this.printerDetail(printer);
+  async getAllDetails(): Promise<PrinterResponse[]> {
+    const idList: string[] = [];
+    const printerList: PrinterResponse[] = [];
+    (await this.printermodel.find({}, "_id")).map(id => idList.push(id._id));
+
+    for (let i = 0; i < idList.length; i++) {
+      let printer: PrinterResponse = await this.getPrinterDetail(idList[i]);
+      printerList.push(printer)
+    }
+
+    return printerList;
   }
 
-  private async printerDetail(printer: Printer){
-    let oidValues: Oid;
-    let { printerCountOids } = printer;
+  async getPrinterDetail(id: string){
+    const printer: Printer = await this.findOne(id);
+    const { printerCountOids, printerLevelOids, printerIp, ...dataPrinter } = printer
+    let printerResponse: Printer | PrinterResponse = {
+      printerName: printer.printerName,
+      printerBrand: printer.printerBrand,
+      printerModel: printer.printerModel,
+      printerSerie: printer.printerSerie,
+      printerType: printer.printerType,
+      printerIp: printer.printerIp,
+      printerMac: printer.printerMac,
+      printerBuilding: printer.printerBuilding,
+      printerLocation: printer.printerLocation,
+      printerCountOids: await this.getOidValues(printerIp, printerCountOids),
+      printerLevelOids: await this.getOidValues(printerIp, printerLevelOids),
+      messageStatus: "ONLINE"
+    };
+    if(printerResponse.printerCountOids[0].value === 0 && printerResponse.printerLevelOids[0].value === 0){
+      printerResponse.messageStatus = "NOT ONLINE"
+    }
+    return printerResponse
+  }
 
-    
+  private getOidValues(ip: string, oids: Oid[]){
+    //Resultado oids
+    let oidResult: Oid[] = [];
+    //Creacion de Array de Oids
+    let oidString: string[] = []
+    oids.map(oid => oidString.push(oid.oid))
 
-    
-
-    const session = this.snmp.createSession(printer.printerIp, "public");
-    session.get([printerCountOids[0].oid], (error: any, varbinds:any) => {
-      if(error){
-        console.log(error)
-      }else{
-        console.log(varbinds[0])
-        oidValues = {
-          name: printerCountOids[0].name,
-          oid: printerCountOids[0].oid,
-          value: varbinds[0].value
+    //Obtiene Datos de SNMP
+    const consult = new Promise((resolve, reject) => {
+      //Modificamos opciones
+      let options = {
+        port: 161,
+        retries: 2,
+        timeout: 500,
+        backoff: 1.0,
+        transport: "udp4",
+        trapPort: 162,
+        version: this.snmp.Version1,
+        backwardsGetNexts: true,
+        reportOidMismatchErrors: false,
+        idBitsSize: 32
+      };
+      //Crea sesion
+      let session = this.snmp.createSession(ip, "public", options);
+      //Solicita Informacion
+      session.get(oidString, function(error, varbinds){
+        if(error){
+          console.log(error)
+          return reject(error)
+        }else{
+          //Recorre el arreglo resultante
+          for (let i = 0; i < varbinds.length; i++) {
+            let oid: Oid = {
+              name: oids[i].name,
+              oid: oids[i].oid,
+              value: varbinds[i].value,
+              color: oids[i].color ?  oids[i].color : undefined
+            }
+            oidResult.push(oid)
+          }
+          return resolve(oidResult)
         }
-        console.log(oidValues)
-        printer.printerCountOids[0] = oidValues;
+        session.close()
+      })
+    }).catch(()=>{ 
+      //Recorre los oids para asignar 0
+      for (let i = 0; i < oids.length; i++) {
+        let oid: Oid = {
+          name: oids[i].name,
+          oid: oids[i].oid,
+          value: 0,
+          color: oids[i].color ?  oids[i].color : undefined
+        }
+        oidResult.push(oid)
       }
+      console.log("ERROR")
     })
+
+    return consult.then(()=> {return oidResult})
     
   }
 

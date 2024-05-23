@@ -36,4 +36,10 @@ export class PrinterController {
   getPrinterDetail(@Param('id') id: string){
     return this.printerService.getPrinterDetail(id);
   }
+
+  @Get('/d/detail')
+  getAllDetail() {
+    return this.printerService.getAllDetails();
+  }
+
 }
