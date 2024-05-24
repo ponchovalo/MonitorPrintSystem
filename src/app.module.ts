@@ -3,6 +3,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { PrinterModelModule } from './printer-model/printer-model.module';
 import { PrinterModule } from './printer/printer.module';
 import { CommonModule } from './common/common.module';
+import { StoreModule } from './store/store.module';
 
 @Module({
   imports: [
@@ -10,6 +11,7 @@ import { CommonModule } from './common/common.module';
     PrinterModelModule,
     PrinterModule,
     CommonModule,
+    StoreModule,
     ],
   controllers: [],
   providers: [],

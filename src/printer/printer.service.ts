@@ -38,7 +38,7 @@ export class PrinterService {
         printerLevelOids: printerModel.levelOids,
       }
       const printer = await this.printermodel.create(newPrinter)
-      return newPrinter
+      return printer
     } catch (error) {
       this.handleExceptions(error)
     }

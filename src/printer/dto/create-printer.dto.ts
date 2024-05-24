@@ -1,5 +1,4 @@
-import { IsArray, IsString } from "class-validator";
-import { Oid } from "src/printer-model/interfaces/oid.interface";
+import { IsString } from "class-validator";
 
 export class CreatePrinterDto {
 

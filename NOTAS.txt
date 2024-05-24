@@ -6,3 +6,11 @@ Permitir crear modelos con sus respectivos oids, sean de tipo color o blanco y n
 
 los oids deben ser para sacar los contadores y los niveles de toner.
 
+
+Gestion de Almacen
+Entradas : {fecha, usuario, refacciones: [{nombre, codigo, cantidad}]}
+Solicitudes de pedido: {fecha, nombre, [en base a registros de cambios de refacciones]}
+
+Registros de cambio de refacciones: {usuario, fecha, impresora, contadores, refaccion}
+
+
